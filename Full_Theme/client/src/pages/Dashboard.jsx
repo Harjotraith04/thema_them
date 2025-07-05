@@ -441,6 +441,7 @@ function Dashboard() {
                   setCodes={setCodes}
                   onCodesUpdated={refreshProjectData}
                   documents={documents}
+                  codebooks={codebooks}
                 />
               </Box>
             )}

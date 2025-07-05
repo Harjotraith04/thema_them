@@ -62,7 +62,7 @@ import { EnhancedTableRow, GlowButton, FrostedGlassPaper } from './StyledCompone
 import { codesApi } from '../utils/api';
 import api from '../utils/api';
 
-function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated, documents = [] }) {
+function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated, documents = [], codebooks = [] }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
@@ -93,7 +93,7 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
     codesByCodebook[codebookId].push(code);
   });
 
-  // Create codebook tabs - Default and AI Generated ones
+  // Create codebook tabs using actual codebook data
   const codebookIds = Object.keys(codesByCodebook);
 
   // Sort the IDs to ensure manual codebooks come first, then AI codebooks
@@ -118,44 +118,78 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
     return 0; // Keep original order for same type
   });
 
-  const codebooks = codebookIds.map((codebookId, index) => {
+  // Create codebook objects with proper names
+  const codebookObjects = codebookIds.map((codebookId, index) => {
     const codesInCodebook = codesByCodebook[codebookId];
     
-    const hasAIGeneratedCodes = codesInCodebook.some(code => code.is_auto_generated);
-    const hasManualCodes = codesInCodebook.some(code => !code.is_auto_generated);
+    // Try to find the actual codebook in the passed codebooks data
+    const actualCodebook = codebooks.find(cb => cb.id === parseInt(codebookId));
     
-    let name;
-    let isAIGenerated;
-
-    if (hasAIGeneratedCodes) {
-      const aiCodebooksSoFar = codebooks.filter(cb => cb.isAIGenerated).length;
-      name = aiCodebooksSoFar > 0 ? `AI Coding ${aiCodebooksSoFar + 1}` : 'AI Coding';
-      isAIGenerated = true;
+    if (actualCodebook) {
+      // Use actual codebook data but clean up AI codebook names
+      let name = actualCodebook.name;
+      let isAIGenerated = actualCodebook.is_ai_generated;
+      
+      // If it's an AI-generated codebook, use cleaner naming
+      if (isAIGenerated) {
+        // Count AI codebooks created so far for numbering
+        const aiCodebookCount = codebookIds.slice(0, index + 1)
+          .filter(id => {
+            const cb = codebooks.find(cb => cb.id === parseInt(id));
+            return cb && cb.is_ai_generated;
+          })
+          .length;
+        name = `AI Codebook ${aiCodebookCount}`;
+      } else if (name === 'default' || name.toLowerCase().includes('default')) {
+        // If it's a default codebook, use proper naming
+        name = 'Default Codebook';
+      }
+      
+      return {
+        id: codebookId,
+        name,
+        codes: codesInCodebook,
+        isAIGenerated
+      };
     } else {
-      name = 'default';
-      isAIGenerated = false;
+      // Fallback to old logic for codebooks not found in the server data
+      const hasAIGeneratedCodes = codesInCodebook.some(code => code.is_auto_generated);
+      let name;
+      let isAIGenerated;
+
+      if (hasAIGeneratedCodes) {
+        // Count AI codebooks created so far
+        const aiCodebookCount = codebookIds.slice(0, index + 1)
+          .filter(id => codesByCodebook[id].some(code => code.is_auto_generated))
+          .length;
+        name = `AI Codebook ${aiCodebookCount}`;
+        isAIGenerated = true;
+      } else {
+        name = codebookId === 'default' ? 'Default Codebook' : `AI Codebook ${index + 1}`;
+        isAIGenerated = codebookId !== 'default';
+      }
+      
+      return {
+        id: codebookId,
+        name,
+        codes: codesInCodebook,
+        isAIGenerated
+      };
     }
-    
-    return {
-      id: codebookId,
-      name,
-      codes: codesInCodebook,
-      isAIGenerated
-    };
   });
 
   // If no codebooks exist, create a default empty one
-  if (codebooks.length === 0) {
-    codebooks.push({
+  if (codebookObjects.length === 0) {
+    codebookObjects.push({
       id: 'default',
-      name: 'default',
+      name: 'Default Codebook',
       codes: [],
       isAIGenerated: false
     });
   }
 
   // Ensure selectedCodebook is within bounds
-  const validSelectedCodebook = Math.min(selectedCodebook, Math.max(0, codebooks.length - 1));
+  const validSelectedCodebook = Math.min(selectedCodebook, Math.max(0, codebookObjects.length - 1));
   if (validSelectedCodebook !== selectedCodebook) {
     setSelectedCodebook(validSelectedCodebook);
   }
@@ -294,7 +328,7 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
         // We need to wait for the component to re-render with the new codes
         setTimeout(() => {
           // Find the first AI codebook index
-          const firstAICodebookIndex = codebooks.findIndex(cb => cb.isAIGenerated);
+          const firstAICodebookIndex = codebookObjects.findIndex(cb => cb.isAIGenerated);
           if (firstAICodebookIndex !== -1) {
             setSelectedCodebook(firstAICodebookIndex);
           }
@@ -367,7 +401,7 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
 
   // Function to select all codes in current codebook
   const handleSelectAllCodes = () => {
-    const currentCodes = codebooks[validSelectedCodebook]?.codes || [];
+    const currentCodes = codebookObjects[validSelectedCodebook]?.codes || [];
     const currentCodeIds = currentCodes.map(code => code.id);
     
     if (selectedCodesForGrouping.length === currentCodeIds.length) {
@@ -402,7 +436,7 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
       ]);
       
       // Process each codebook
-      codebooks.forEach(codebook => {
+      codebookObjects.forEach(codebook => {
         const codebookName = codebook.name;
         const codebookType = codebook.isAIGenerated ? 'AI Generated' : 'Manual';
         
@@ -723,7 +757,7 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
                 },
               }}
             >
-              {codebooks.map((cb, index) => (
+              {codebookObjects.map((cb, index) => (
                 <Tab 
                   key={cb.id} 
                   label={
@@ -819,7 +853,7 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
                     onChange={(e, newValue) => setSelectedCodebook(newValue)}
                     aria-label="Codebook tabs"
                   >
-                    {codebooks.map(cb => <Tab key={cb.id} label={cb.name} />)}
+                    {codebookObjects.map(cb => <Tab key={cb.id} label={cb.name} />)}
                   </Tabs>
                 </Grid>
               )}
@@ -827,7 +861,7 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
           </FrostedGlassPaper>
 
           <Box sx={{ overflowY: 'auto', flexGrow: 1, p: isMobile ? 0 : 1 }}>
-            {(codebooks[validSelectedCodebook]?.codes || [])
+            {(codebookObjects[validSelectedCodebook]?.codes || [])
               .filter(code => 
                 code.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 codeAssignments.some(a => a.code_name === code.name && 
