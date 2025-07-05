@@ -147,8 +147,7 @@ function Navigation({
     {
       name: 'Documents',
       icon: <DescriptionOutlinedIcon />,
-      description: 'Manage research documents',
-      hasChildren: true
+      description: 'Manage research documents'
     },
     {
       name: 'Research details',
@@ -182,9 +181,6 @@ function Navigation({
     e.preventDefault();
     e.stopPropagation();
     handleMobileMenuItemClick(item.name);
-    if (item.hasChildren) {
-      setDocumentsExpanded(!documentsExpanded);
-    }
   };
 
   // Add event-catching overlay to prevent navigation from disappearing
@@ -225,198 +221,7 @@ function Navigation({
     };
   }, []);
 
-  // Render document files in navigation with enhanced UI
-  const renderDocumentFilesList = () => {
-    const documentsToDisplay = documents && Array.isArray(documents) && documents.length > 0
-      ? documents
-      : [];
-    
-    return (
-      <Box>
-        {/* Upload Button */}
-        <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
-          <input
-            accept=".pdf,.doc,.docx,.xlsx,.xls,.txt"
-            style={{ display: 'none' }}
-            id="file-upload"
-            multiple
-            type="file"
-            onChange={handleFileUpload}
-          />
-          <label htmlFor="file-upload">
-            <Button
-              variant="outlined"
-              component="span"
-              fullWidth
-              startIcon={<CloudUploadIcon />}
-              sx={{
-                py: 1.5,
-                borderStyle: 'dashed',
-                borderWidth: 2,
-                borderColor: theme.palette.primary.main,
-                color: theme.palette.primary.main,
-                '&:hover': {
-                  borderColor: theme.palette.primary.dark,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                },
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Upload files
-            </Button>
-          </label>
-        </Box>
 
-        {/* Research Documents Header */}
-        <Box sx={{ 
-          px: 2, 
-          py: 1.5,
-          bgcolor: alpha(theme.palette.primary.main, 0.08),
-          borderBottom: `1px solid ${theme.palette.divider}`
-        }}>
-          <Typography variant="body2" fontWeight={600} color="primary.main">
-            RESEARCH DOCUMENTS
-          </Typography>
-        </Box>
-
-        {/* Documents List */}
-        <List disablePadding sx={{ maxHeight: '300px', overflowY: 'auto' }}>
-          {documentsToDisplay.length > 0 ? documentsToDisplay.map((doc) => {
-            const fileName = doc.name || doc.file_name || 'Untitled Document';
-            const fileExtension = fileName.split('.').pop().toUpperCase();
-            const uploadDate = new Date(doc.created_at || doc.uploadDate || doc.upload_date || new Date());
-            
-            return (
-              <ListItem 
-                key={doc.id || doc._id}
-                sx={{ 
-                  py: 1.5,
-                  px: 2,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                  '&:last-child': {
-                    borderBottom: 'none'
-                  },
-                  '&:hover': {
-                    bgcolor: theme.palette.mode === 'dark' 
-                      ? 'rgba(255, 255, 255, 0.05)' 
-                      : 'rgba(0, 0, 0, 0.04)',
-                  },
-                  transition: 'all 0.2s ease',
-                  backgroundColor: (activeFile === doc.id) 
-                    ? alpha(theme.palette.primary.main, 0.15)
-                    : 'transparent',
-                  cursor: 'pointer',
-                  position: 'relative'
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (onDocumentSelect) {
-                    console.log(`Navigation: Selected document with ID ${doc.id}`);
-                    onDocumentSelect(doc.id, doc);
-                  }
-                }}
-              >
-                <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ width: '100%' }}>
-                  {/* File Icon */}
-                  <Box sx={{ 
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: 40,
-                    height: 40,
-                    borderRadius: 1,
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
-                  }}>
-                    {getFileIcon(fileName)}
-                  </Box>
-
-                  {/* File Info */}
-                  <Box sx={{ 
-                    flex: 1,
-                    minWidth: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 0.5
-                  }}>
-                    <Typography 
-                      variant="body2"
-                      fontWeight={500}
-                      sx={{ 
-                        color: (activeFile === doc.id)
-                          ? theme.palette.primary.main
-                          : theme.palette.text.primary,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        lineHeight: 1.2
-                      }}
-                    >
-                      {fileName}
-                    </Typography>
-                    
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Chip 
-                        label={fileExtension}
-                        size="small"
-                        color={getFileTypeColor(fileName)}
-                        sx={{ 
-                          height: 20,
-                          fontSize: '0.65rem',
-                          fontWeight: 600
-                        }}
-                      />
-                      <Typography 
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ fontSize: '0.7rem' }}
-                      >
-                        {uploadDate.toLocaleDateString()}
-                      </Typography>
-                    </Stack>
-                  </Box>
-
-                  {/* Delete Button */}
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (onFileDelete) {
-                        onFileDelete(doc.id || doc._id, doc);
-                      }
-                    }}
-                    sx={{
-                      opacity: 0.6,
-                      '&:hover': {
-                        opacity: 1,
-                        color: 'error.main',
-                        bgcolor: alpha(theme.palette.error.main, 0.1)
-                      },
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Stack>
-              </ListItem>
-            );
-          }) : (
-            <ListItem sx={{ py: 3, justifyContent: 'center', flexDirection: 'column', gap: 1 }}>
-              <CloudUploadIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-              <Typography variant="body2" color="text.secondary" textAlign="center">
-                No documents uploaded yet
-              </Typography>
-              <Typography variant="caption" color="text.disabled" textAlign="center">
-                Click "Upload files" to get started
-              </Typography>
-            </ListItem>
-          )}
-        </List>
-      </Box>
-    );
-  };
 
   // Render the navigation content (shared between drawer and sidebar)
   const renderNavigationContent = () => (
@@ -645,46 +450,8 @@ function Navigation({
                       </Box>
                     </Box>
                   </Collapse>
-                  {item.hasChildren && isExpanded && (
-                    <Box 
-                      sx={{
-                        ml: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: activeMenuItem === item.name ? 'white' : theme.palette.text.secondary,
-                      }}
-                    >
-                      {documentsExpanded ? 
-                        <ExpandLessIcon fontSize="small" /> : 
-                        <ExpandMoreIcon fontSize="small" />
-                      }
-                    </Box>
-                  )}
                 </Button>
             </Tooltip>
-            
-            {/* Documents section with enhanced UI */}
-            {item.name === 'Documents' && documentsExpanded && activeMenuItem === 'Documents' && (
-              <Collapse in={documentsExpanded && isExpanded} timeout="auto" unmountOnExit>
-                <Paper 
-                  elevation={2}
-                  sx={{ 
-                    ml: 2,
-                    mr: 1,
-                    mt: 1.5, 
-                    mb: 2, 
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    border: `1px solid ${theme.palette.divider}`,
-                    bgcolor: theme.palette.background.paper,
-                    transition: 'all 0.2s ease',
-                    maxWidth: '100%',
-                  }}
-                >
-                  {renderDocumentFilesList()}
-                </Paper>
-              </Collapse>
-            )}
           </React.Fragment>
         ))}
       </Box>
