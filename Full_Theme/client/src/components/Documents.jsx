@@ -2619,7 +2619,7 @@ function Documents({
         PaperComponent={StyledPaper}
         PaperProps={{
           sx: {
-            borderRadius: theme.shape.borderRadius * 2,
+            borderRadius: 0,
             background: theme.palette.mode === 'dark'
               ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.95)}, ${alpha(theme.palette.primary.main, 0.05)})`
               : `linear-gradient(135deg, ${theme.palette.background.paper}, ${alpha(theme.palette.primary.main, 0.02)})`,

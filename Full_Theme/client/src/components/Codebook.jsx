@@ -58,6 +58,7 @@ import TuneIcon from '@mui/icons-material/Tune';
 import GroupWorkIcon from '@mui/icons-material/GroupWork';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PaletteIcon from '@mui/icons-material/Palette';
 import { EnhancedTableRow, GlowButton, FrostedGlassPaper } from './StyledComponents';
 import { codesApi } from '../utils/api';
 import api from '../utils/api';
@@ -132,7 +133,7 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
       
       // If it's an AI-generated codebook, use cleaner naming
       if (isAIGenerated) {
-        // Count AI codebooks created so far for numbering
+        // Count AI codebook created so far for numbering
         const aiCodebookCount = codebookIds.slice(0, index + 1)
           .filter(id => {
             const cb = codebooks.find(cb => cb.id === parseInt(id));
@@ -520,6 +521,11 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
     }
   };
 
+  // Function to open Themes settings
+  const handleThemes = () => {
+    alert('Theme settings coming soon!');
+  };
+
   // Tabular view for assignments
   const AssignmentsTable = ({ assignments, codeInfo }) => (
     <Box sx={{ mt: 2 }}>
@@ -718,6 +724,10 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
             <ListItemIcon><GroupWorkIcon fontSize="small" /></ListItemIcon>
             <ListItemText>Create Sub-Group</ListItemText>
           </MenuItem>
+          <MenuItem onClick={handleThemes}>
+            <ListItemIcon><PaletteIcon fontSize="small" /></ListItemIcon>
+            <ListItemText>Themes</ListItemText>
+          </MenuItem>
           <MenuItem onClick={handleExportCSV}>
             <ListItemIcon><DownloadIcon fontSize="small" /></ListItemIcon>
             <ListItemText>Export CSV</ListItemText>
@@ -806,6 +816,15 @@ function Codebook({ codeAssignments, projectId, codes, setCodes, onCodesUpdated,
                 onClick={handleCreateSubGroup}
               >
                 Create Sub-Group
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                color="secondary"
+                startIcon={<PaletteIcon />}
+                onClick={handleThemes}
+              >
+                Themes
               </Button>
               <Button
                 fullWidth
