@@ -468,13 +468,48 @@ export const codesApi = {
 };
 
 export const annotationsApi = {
+    /**
+     * Create a new annotation (comment)
+     * @param {object} annotationData - The annotation data to create
+     * @returns {Promise} - The created annotation
+     */
     createAnnotation: (annotationData) => apiRequest('/annotations/', {
         method: 'POST',
         body: JSON.stringify(annotationData)
     }),
+
+    /**
+     * Get all annotations for a project
+     * @param {number|string} projectId - The project ID
+     * @returns {Promise} - The annotations
+     */
     getProjectAnnotations: (projectId) => apiRequest(`/annotations/project/${projectId}`),
+
+    /**
+     * Get all annotations for a project (alternative method)
+     * @param {number|string} projectId - The project ID
+     * @returns {Promise} - The annotations
+     */
+    getAnnotations: (projectId) => apiRequest(`/projects/${projectId}`),
+
+    /**
+     * Delete an annotation
+     * @param {number|string} annotationId - The annotation ID
+     * @returns {Promise} - The result of the delete operation
+     */
     deleteAnnotation: (annotationId) => apiRequest(`/annotations/${annotationId}`, {
         method: 'DELETE'
+    }),
+
+    /**
+     * Update an annotation
+     * @param {number|string} annotationId - The annotation ID
+     * @param {object} annotationData - The updated annotation data
+     * @returns {Promise} - The updated annotation
+     */
+    updateAnnotation: (annotationId, annotationData) => apiRequest(`/annotations/${annotationId}`, {
+        method: 'PUT',
+        body: JSON.stringify(annotationData)
     })
 };
 
@@ -528,48 +563,6 @@ export default {
      */
     deleteAssignment: (assignmentId) => apiRequest(`/code-assignments/${assignmentId}`, {
       method: 'DELETE'
-    })
-  },
-  
-  /**
-   * Annotations API functions
-   */
-  annotations: {
-    /**
-     * Create a new annotation (comment)
-     * @param {object} annotationData - The annotation data to create
-     * @returns {Promise} - The created annotation
-     */
-    createAnnotation: (annotationData) => apiRequest('/annotations', {
-      method: 'POST',
-      body: JSON.stringify(annotationData)
-    }),
-
-    /**
-     * Get all annotations for a project
-     * @param {number|string} projectId - The project ID
-     * @returns {Promise} - The annotations
-     */
-    getAnnotations: (projectId) => apiRequest(`/projects/${projectId}`),
-
-    /**
-     * Delete an annotation
-     * @param {number|string} annotationId - The annotation ID
-     * @returns {Promise} - The result of the delete operation
-     */
-    deleteAnnotation: (annotationId) => apiRequest(`/annotations/${annotationId}`, {
-      method: 'DELETE'
-    }),
-
-    /**
-     * Update an annotation
-     * @param {number|string} annotationId - The annotation ID
-     * @param {object} annotationData - The updated annotation data
-     * @returns {Promise} - The updated annotation
-     */
-    updateAnnotation: (annotationId, annotationData) => apiRequest(`/annotations/${annotationId}`, {
-      method: 'PUT',
-      body: JSON.stringify(annotationData)
     })
   },
   
