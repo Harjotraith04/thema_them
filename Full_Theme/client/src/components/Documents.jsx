@@ -96,11 +96,15 @@ function Documents({
 
   const handleTextSelection = useCallback((selectionData) => {
     setSelection(selectionData);
-    setSelectionPosition({
-        top: selectionData.rect.top - 10,
-        left: selectionData.rect.left + selectionData.rect.width / 2,
-      });
-    setShowSelectionToolbar(true);
+    if (selectionData) {
+      setSelectionPosition({
+          top: selectionData.rect.top - 10,
+          left: selectionData.rect.left + selectionData.rect.width / 2,
+        });
+      setShowSelectionToolbar(true);
+    } else {
+      setShowSelectionToolbar(false);
+    }
   }, []);
 
   const handleAddComment = () => {
@@ -250,7 +254,7 @@ function Documents({
               }}
             >
               <DocumentViewer
-                document={{...activeDocument, content: documentContent.join('\n')}}
+                documentData={{...activeDocument, content: documentContent.join('\n')}}
                 annotations={[
                   ...(codeAssignments || []).filter(assignment => assignment.document_id === activeDocument.id),
                   ...(commentData || []).filter(comment => comment.document_id === activeDocument.id)

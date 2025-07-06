@@ -1,13 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Box, Typography, Paper, useTheme, alpha, Chip, Divider, Tooltip } from '@mui/material';
 import { Description, TableChart, Assignment } from '@mui/icons-material';
 import ReadyToAnalyze from './ReadyToAnalyze';
 import { getAnnotationColor } from '../utils/colorUtils';
 
-const DocumentViewer = ({ document, annotations, onTextSelect }) => {
+const DocumentViewer = ({ documentData, annotations, onTextSelect }) => {
   const theme = useTheme();
+  const contentRef = useRef(null);
 
-  if (!document) {
+  if (!documentData) {
     return <ReadyToAnalyze />;
   }
 
@@ -17,41 +18,64 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
       annotation.code_name && 
       annotation.start_char !== undefined && 
       annotation.end_char !== undefined &&
-      annotation.document_id === document.id
+      annotation.document_id === documentData.id
     );
-  }, [annotations, document.id]);
+  }, [annotations, documentData.id]);
 
   const commentAnnotations = useMemo(() => {
     return (annotations || []).filter(annotation => 
       !annotation.code_name && 
       annotation.comment !== undefined &&
-      annotation.document_id === document.id
+      annotation.document_id === documentData.id
     );
-  }, [annotations, document.id]);
+  }, [annotations, documentData.id]);
 
   const handleMouseUp = () => {
     const selection = window.getSelection();
-    if (selection.toString().trim().length > 0) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      const text = selection.toString();
-      
-      // Get the actual position within the document content
-      const documentTextContent = document.content;
-      const startChar = documentTextContent.indexOf(text);
-      const endChar = startChar + text.length;
-
-      // Validate that the selection is within the document
-      if (startChar !== -1 && endChar <= documentTextContent.length) {
-        onTextSelect({
-          text,
-          documentId: document.id,
-          start_char: startChar,
-          end_char: endChar,
-          rect
-        });
-      }
+    if (!selection || selection.rangeCount === 0) {
+      onTextSelect(null);
+      return;
     }
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    if (selectedText.trim().length === 0) {
+      onTextSelect(null);
+      return;
+    }
+
+    const contentElement = contentRef.current;
+    if (!contentElement || !contentElement.contains(range.commonAncestorContainer)) {
+      onTextSelect(null);
+      return;
+    }
+
+    const preSelectionRange = window.document.createRange();
+    preSelectionRange.selectNodeContents(contentElement);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    const start = preSelectionRange.toString().length;
+    const end = start + selectedText.length;
+
+    // This is a fallback to ensure we don't get out of bounds with complex documents.
+    const docContent = documentData.content || '';
+    const startChar = Math.min(start, docContent.length);
+    const endChar = Math.min(end, docContent.length);
+
+    if (startChar >= endChar) {
+        onTextSelect(null);
+        return;
+    }
+
+    const rect = range.getBoundingClientRect();
+
+    onTextSelect({
+      text: selectedText,
+      documentId: documentData.id,
+      start_char: startChar,
+      end_char: endChar,
+      rect,
+    });
   };
 
   // Function to create highlighted content with code assignments
@@ -68,7 +92,7 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
         assignment.start_char >= 0 &&
         assignment.end_char <= content.length &&
         assignment.start_char < assignment.end_char &&
-        assignment.document_id === document.id // Ensure it belongs to this document
+        assignment.document_id === documentData.id // Ensure it belongs to this document
       )
       .sort((a, b) => a.start_char - b.start_char);
 
@@ -202,15 +226,15 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
   };
 
   const getHighlightedContent = () => {
-    if (!document || !document.content) return null;
+    if (!documentData || !documentData.content) return null;
 
-    const content = document.content;
+    const content = documentData.content;
     
     // Create highlighted segments for the content
     const segments = createHighlightedContent(content);
     
     // For CSV files, we can still apply highlighting to the content
-    if (document.name.toLowerCase().includes('.csv')) {
+    if (documentData.name.toLowerCase().includes('.csv')) {
       // If we have code assignments, apply highlighting to CSV content too
       if (codeAssignments && codeAssignments.length > 0) {
         return renderHighlightedContent(segments);
@@ -321,14 +345,14 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
   };
 
   const getFileIcon = () => {
-    const fileName = document.name.toLowerCase();
+    const fileName = documentData.name.toLowerCase();
     if (fileName.includes('.csv')) return <TableChart sx={{ fontSize: 16 }} />;
     if (fileName.includes('.pdf')) return <Description sx={{ fontSize: 16 }} />;
     return <Assignment sx={{ fontSize: 16 }} />;
   };
 
   const getFileTypeChip = () => {
-    const fileName = document.name.toLowerCase();
+    const fileName = documentData.name.toLowerCase();
     let type = 'Document';
     let color = 'default';
     
@@ -407,7 +431,6 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
           height: '100%',
           display: 'flex'
         }} 
-        onMouseUp={handleMouseUp}
       >
         <Paper 
           elevation={0} 
@@ -446,7 +469,7 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
                 color: theme.palette.text.primary,
                 fontSize: { xs: '1rem', sm: '1.1rem' }
               }}>
-                {document.name}
+                {documentData.name}
               </Typography>
               {getFileTypeChip()}
             </Box>
@@ -457,7 +480,7 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
                 fontStyle: 'italic',
                 fontSize: '0.7rem'
               }}>
-                Document ID: {document.id ? String(document.id).slice(0, 8) : 'N/A'}...
+                Document ID: {documentData.id ? String(documentData.id).slice(0, 8) : 'N/A'}...
               </Typography>
               
               {/* Code Assignment Statistics */}
@@ -510,7 +533,10 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
           <Box sx={{ 
             flexGrow: 1,
             '& > *:last-child': { mb: 2 }
-          }}>
+          }}
+          ref={contentRef}
+          onMouseUp={handleMouseUp}
+          >
             {getHighlightedContent()}
           </Box>
         </Paper>
