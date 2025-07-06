@@ -11,18 +11,23 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
     return <ReadyToAnalyze />;
   }
 
-  // Separate code assignments from comments
+  // Separate code assignments from comments and filter by document ID
   const codeAssignments = useMemo(() => {
     return (annotations || []).filter(annotation => 
-      annotation.code_name && annotation.start_char !== undefined && annotation.end_char !== undefined
+      annotation.code_name && 
+      annotation.start_char !== undefined && 
+      annotation.end_char !== undefined &&
+      annotation.document_id === document.id
     );
-  }, [annotations]);
+  }, [annotations, document.id]);
 
   const commentAnnotations = useMemo(() => {
     return (annotations || []).filter(annotation => 
-      !annotation.code_name && annotation.comment !== undefined
+      !annotation.code_name && 
+      annotation.comment !== undefined &&
+      annotation.document_id === document.id
     );
-  }, [annotations]);
+  }, [annotations, document.id]);
 
   const handleMouseUp = () => {
     const selection = window.getSelection();
@@ -30,16 +35,22 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       const text = selection.toString();
-      const startChar = document.content.indexOf(text);
+      
+      // Get the actual position within the document content
+      const documentTextContent = document.content;
+      const startChar = documentTextContent.indexOf(text);
       const endChar = startChar + text.length;
 
-      onTextSelect({
-        text,
-        documentId: document.id,
-        start_char: startChar,
-        end_char: endChar,
-        rect
-      });
+      // Validate that the selection is within the document
+      if (startChar !== -1 && endChar <= documentTextContent.length) {
+        onTextSelect({
+          text,
+          documentId: document.id,
+          start_char: startChar,
+          end_char: endChar,
+          rect
+        });
+      }
     }
   };
 
@@ -56,7 +67,8 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
         assignment.end_char !== undefined &&
         assignment.start_char >= 0 &&
         assignment.end_char <= content.length &&
-        assignment.start_char < assignment.end_char
+        assignment.start_char < assignment.end_char &&
+        assignment.document_id === document.id // Ensure it belongs to this document
       )
       .sort((a, b) => a.start_char - b.start_char);
 
@@ -197,8 +209,12 @@ const DocumentViewer = ({ document, annotations, onTextSelect }) => {
     // Create highlighted segments for the content
     const segments = createHighlightedContent(content);
     
-    // If it's a CSV file, format it nicely but without highlighting for now
+    // For CSV files, we can still apply highlighting to the content
     if (document.name.toLowerCase().includes('.csv')) {
+      // If we have code assignments, apply highlighting to CSV content too
+      if (codeAssignments && codeAssignments.length > 0) {
+        return renderHighlightedContent(segments);
+      }
       return formatCSVContent(content);
     }
     

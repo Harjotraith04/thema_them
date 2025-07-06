@@ -251,7 +251,10 @@ function Documents({
             >
               <DocumentViewer
                 document={{...activeDocument, content: documentContent.join('\n')}}
-                annotations={[...(codeAssignments || []), ...(commentData || [])]}
+                annotations={[
+                  ...(codeAssignments || []).filter(assignment => assignment.document_id === activeDocument.id),
+                  ...(commentData || []).filter(comment => comment.document_id === activeDocument.id)
+                ]}
                 onTextSelect={handleTextSelection}
               />
             </Box>
