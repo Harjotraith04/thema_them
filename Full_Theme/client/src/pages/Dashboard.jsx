@@ -68,9 +68,7 @@ function Dashboard() {
   const [createCodeDialogOpen, setCreateCodeDialogOpen] = useState(false);
   const [newCodeFields, setNewCodeFields] = useState({
     name: '',
-    definition: '',
     description: '',
-    category: '',
     color: ''  });
   
   // SpeedDial state

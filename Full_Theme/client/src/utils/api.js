@@ -467,9 +467,40 @@ export const codesApi = {
   getCodesByGroup: (groupName, projectId) => apiRequest(`/codes/by-group/${encodeURIComponent(groupName)}?project_id=${projectId}`)
 };
 
+export const annotationsApi = {
+    createAnnotation: (annotationData) => apiRequest('/annotations/', {
+        method: 'POST',
+        body: JSON.stringify(annotationData)
+    }),
+    getProjectAnnotations: (projectId) => apiRequest(`/annotations/project/${projectId}`),
+    deleteAnnotation: (annotationId) => apiRequest(`/annotations/${annotationId}`, {
+        method: 'DELETE'
+    })
+};
+
+export const authApi = {
+    login: (credentials) => apiRequest('/auth/token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(credentials),
+        requireAuth: false
+    }),
+    signup: (userData) => apiRequest('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+        requireAuth: false
+    }),
+    getCurrentUser: () => apiRequest('/users/me')
+};
+
 export default {
   projects: projectsApi,
   documents: documentsApi,
+  codes: codesApi,
+  annotations: annotationsApi,
+  auth: authApi,
   
   /**
    * Code Assignments API functions

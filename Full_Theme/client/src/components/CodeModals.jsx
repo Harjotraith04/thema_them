@@ -42,8 +42,8 @@ function CodeModals({
           code_name: selectedCodeObject.name,
           code_description: selectedCodeObject.description,
           code_color: selectedCodeObject.color,
-          start_char: pendingCodeSelection.startChar,
-          end_char: pendingCodeSelection.endChar,
+          start_char: pendingCodeSelection.start_char,
+          end_char: pendingCodeSelection.end_char,
           text: pendingCodeSelection.text
         };
         
@@ -176,13 +176,7 @@ function CodeModals({
             onChange={e => setNewCodeFields(f => ({ ...f, name: e.target.value }))}
             sx={{ mb: 1 }}
           />
-          <TextField
-            label="Definition"
-            fullWidth
-            value={newCodeFields.definition}
-            onChange={e => setNewCodeFields(f => ({ ...f, definition: e.target.value }))}
-            sx={{ mb: 1 }}
-          />
+          
           <TextField
             label="Description"
             fullWidth
@@ -190,13 +184,7 @@ function CodeModals({
             onChange={e => setNewCodeFields(f => ({ ...f, description: e.target.value }))}
             sx={{ mb: 1 }}
           />
-          <TextField
-            label="Category"
-            fullWidth
-            value={newCodeFields.category}
-            onChange={e => setNewCodeFields(f => ({ ...f, category: e.target.value }))}
-            sx={{ mb: 1 }}
-          />
+          
           <TextField
             label="Color"
             fullWidth
